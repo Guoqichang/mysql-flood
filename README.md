@@ -57,5 +57,5 @@ config.yaml 里的 `198.51.100.42` 是占位假 IP（TEST-NET-2 段）。真实 
 
 ## 依赖
 
-- python3
-- pymysql（脚本自动安装）
+- **python3**（任何 Linux 自带，无需 pip / venv / 联网装包）
+- pymysql 已 vendored 进 `vendor/`（纯 Python，跨平台），脚本通过 `PYTHONPATH` 直接加载，**零安装**
