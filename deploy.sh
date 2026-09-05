@@ -58,6 +58,10 @@ RC=$?
 if [ "$MODE" = "demo" ]; then
     echo "[*] demo 结束, 退出"; exit $RC
 fi
+if [ $RC -ne 0 ]; then
+    echo "[-] demo 验证失败 (目标不通/凭据错), 不启动攻击"
+    exit $RC
+fi
 
 # 4. 启动攻击 (后台 + unbuffered)
 echo "[*] 启动 ${MODE} 模式 (后台)..."
